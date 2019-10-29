@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import scrapy
+import time
 from imdb_crawler.items import ImdbCrawlerItem
 from scrapy.selector import Selector
 
 year = 2019
 month = 10
-day = 26
+day = 29
 
 newday = day-1
 class ShowtimesSpider(scrapy.Spider):

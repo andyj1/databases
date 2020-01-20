@@ -1,7 +1,7 @@
 #!/bin/python3
 
 # Sailors and Boats tables representation in SQLAlchemy ORM
-# reference: lecture script
+# reference: lecture script, https://docs.sqlalchemy.org/en/13/orm/basic_relationships.html
 # October 2019
 # Andy Jeong
 
@@ -18,11 +18,15 @@ s = session()
 
 class Sailor(Base):
     __tablename__ = 'sailors'
+
     sid = Column(Integer, primary_key=True)
     sname = Column(String)
     rating = Column(Integer)
     age = Column(Integer)
 
+    # one-to-many relationship b/w sailor-boat
+    # boats = relationship('Boat', backref='Boat')
+    
     def __init__(self, sid, sname, rating, age):
         self.sid = sid
         self.sname = sname
@@ -41,9 +45,13 @@ class Boat(Base):
     color = Column(String)
     length = Column(Integer)
 
+
+    # one-to-many relationship b/w boat-reservation, with cascade delete
     reservations = relationship('Reservation',
                                 backref=backref('boat', cascade='delete'))
-                                
+    # sailors = relationship('Sailor', foreign_keys='Sailor.sid', back_populates="boats")
+    # boat_sid = Column(Integer, ForeignKey('Sailor.sid'))
+    
     def __init__(self, bid, bname, color, length):
         self.bid = bid
         self.bname = bname
@@ -61,7 +69,7 @@ class Reservation(Base):
     bid = Column(Integer, ForeignKey('boats.bid'))
     day = Column(DateTime)
 
-    sailor = relationship('Sailor')
+    sailor = relationship('Sailor') # one-to-many relationship b/w sailor-reservation
 
     def __init__(self, sid, bid, day):
         self.sid = sid

@@ -1,14 +1,16 @@
 -- 1. Select, for each boat, the sailor who made the highest number of reservations for that boat
-SELECT subquery.bid, subquery.sid, MAX(counts)
-FROM ( 
-    SELECT r.bid as bid, r.sid as sid, COUNT(r.bid) as counts
-    FROM reserves as r, sailors as s
-    WHERE r.sid = s.sid
-    GROUP BY r.bid, r.sid
-    ORDER BY counts DESC
-) as subquery
-GROUP BY subquery.bid
-ORDER BY subquery.bid;
+
+SELECT DISTINCT b.bid, s.sname, count(*) as rank
+FROM boats b join reserves r on b.bid = r.bid
+JOIN sailors s on s.sid = r.sid
+GROUP BY b.bid, b.bname, s.sid, s.sname
+HAVING count(*) >= all(
+                        SELECT count(*)
+                        FROM reserves r1
+                        WHERE r1.bid = b.bid
+                        GROUP BY r1.sid
+                      )
+ORDER BY b.bid, s.sname;
 
 -- 2. List, for every boat, the number of times it has been reserved, excluding those boats that have never been reserved (list the id and the name).
 SELECT b.bid, b.bname, count(r.bid) as reserve_cnt

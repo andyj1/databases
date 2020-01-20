@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import text
 
-from pset1orm import Base, Sailor, Boat, Reservation
+from pset1_2 import Base, Sailor, Boat, Reservation
 from unittest import TestCase
 import unittest
 import datetime
@@ -80,6 +80,59 @@ class TestQuery(TestCase):
         result1 = self.connection.execute(self.querystmt)
 
         self.querystmt_orm = self.session.query(func.avg(Sailor.age)).filter(Sailor.rating==10).group_by(Sailor.age).statement.compile(compile_kwargs={"literal_binds": True})
+        result2_orm = self.connection.execute(self.querystmt_orm)
+        # check scalar value results
+        self.assertEqual(result1.scalar(), result2_orm.scalar())
+
+    def tearDownInstance(self):
+        self.session.close()
+        self.trans.rollback()
+        # return connection to the engine
+        self.connection.close()
+
+
+class TestQuery2(TestCase):
+    def setUp(self):
+        # connect to the database
+        self.connection = engine.connect()
+        # begin a non-ORM transaction
+        self.trans = self.connection.begin()
+        # bind an individual Session to the connection
+        self.session = Session(bind=self.connection)
+        Base.metadata.create_all(engine)
+
+    def test_instance(self):
+        # Part A: #2
+        self.querystmt = text("""SELECT b.bid, b.bname, count(r.bid) FROM boats as b join reserves as r ON b.bid = r.bid GROUP BY r.bid""")
+        result1 = self.connection.execute(self.querystmt)
+
+        self.querystmt_orm = self.session.query(Boat.bid, Boat.bname, func.count(Reservation.bid)).join(Reservation, Boat.bid==Reservation.bid).group_by(Reservation.bid).statement.compile(compile_kwargs={"literal_binds": True})
+        result2_orm = self.connection.execute(self.querystmt_orm)
+        # check scalar value results
+        self.assertEqual(result1.scalar(), result2_orm.scalar())
+
+    def tearDownInstance(self):
+        self.session.close()
+        self.trans.rollback()
+        # return connection to the engine
+        self.connection.close()
+
+class TestQuery5(TestCase):
+    def setUp(self):
+        # connect to the database
+        self.connection = engine.connect()
+        # begin a non-ORM transaction
+        self.trans = self.connection.begin()
+        # bind an individual Session to the connection
+        self.session = Session(bind=self.connection)
+        Base.metadata.create_all(engine)
+
+    def test_instance(self):
+        # Part A: #5
+        self.querystmt = text("""SELECT b.bid, b.bname, count(*) FROM boats as b join reserves as r ON b.bid = r.bid GROUP BY b.bid, b.bname ORDER BY count(*) DESC LIMIT 1""")
+        result1 = self.connection.execute(self.querystmt)
+
+        self.querystmt_orm = self.session.query(Boat.bid, Boat.bname, func.count()).join(Reservation,Boat.bid==Reservation.bid).group_by(Boat.bid,Boat.bname).order_by(func.count().desc()).limit(1).statement.compile(compile_kwargs={"literal_binds": True})
         result2_orm = self.connection.execute(self.querystmt_orm)
         # check scalar value results
         self.assertEqual(result1.scalar(), result2_orm.scalar())
